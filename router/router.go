@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/HolmesProcessing/Holmes-Interrogation/context"
+	"github.com/HolmesProcessing/Holmes-Interrogation/modules/monitoring"
 	"github.com/HolmesProcessing/Holmes-Interrogation/modules/objects"
 	"github.com/HolmesProcessing/Holmes-Interrogation/modules/results"
 	"github.com/HolmesProcessing/Holmes-Interrogation/modules/submissions"
@@ -14,6 +15,7 @@ var (
 )
 
 func init() {
+	routes["monitoring"] = monitoring.GetRoutes()
 	routes["objects"] = objects.GetRoutes()
 	routes["submissions"] = submissions.GetRoutes()
 	routes["results"] = results.GetRoutes()

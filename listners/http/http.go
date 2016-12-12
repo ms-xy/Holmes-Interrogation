@@ -17,10 +17,10 @@ var (
 func Start(c *context.Ctx, httpBinding, SSLCert, SSLKey string) {
 	ctx = c
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", httpGenericRequestHandler)
-
 	if SSLCert != "" && SSLKey != "" {
+
+		mux := http.NewServeMux()
+		mux.HandleFunc("/", httpGenericRequestHandler)
 
 		cfg := &tls.Config{
 			MinVersion:               tls.VersionTLS12,

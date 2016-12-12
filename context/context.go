@@ -15,8 +15,9 @@ import (
 type Ctx struct {
 	C *gocql.Session // pointer to Cassandra
 
-	S3     *s3.S3 // pointer to S3
-	Bucket string // name of S3 bucket
+	S3           *s3.S3 // pointer to S3
+	Bucket       string // name of S3 bucket
+	HolmesStatus string // URL to storage
 
 	Debug   *log.Logger
 	Info    *log.Logger

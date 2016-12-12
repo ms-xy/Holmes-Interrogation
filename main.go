@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/HolmesProcessing/Holmes-Interrogation/context"
@@ -30,8 +29,7 @@ type DBConnector struct {
 }
 
 type ObjDBConnector struct {
-	IP         string
-	Port       int
+	Endpoint   string
 	Region     string
 	Key        string
 	Secret     string
@@ -40,6 +38,8 @@ type ObjDBConnector struct {
 }
 
 type config struct {
+	HolmesStatus string
+
 	Storage     string
 	Database    []*DBConnector
 	ObjStorage  string
@@ -83,6 +83,9 @@ func main() {
 
 	// reload logging with parameters from config
 	ctx.SetLogging(conf.LogFile, conf.LogLevel)
+
+	// set storage url
+	ctx.HolmesStatus = conf.HolmesStatus
 
 	// connect to Cassandra
 	ctx.C, err = initCassandra(conf.Database)
@@ -141,7 +144,7 @@ func initS3(c []*ObjDBConnector) (*s3.S3, string, error) {
 			c[0].Key,
 			c[0].Secret,
 			""),
-		Endpoint:         aws.String(c[0].IP + ":" + strconv.Itoa(c[0].Port)),
+		Endpoint:         aws.String(c[0].Endpoint),
 		Region:           aws.String(c[0].Region),
 		S3ForcePathStyle: aws.Bool(true),
 		DisableSSL:       aws.Bool(c[0].DisableSSL),

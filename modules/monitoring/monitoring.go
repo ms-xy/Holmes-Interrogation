@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/HolmesProcessing/Holmes-Interrogation/context"
-	// "github.com/gocql/gocql"
+
+	"fmt"
 )
 
 // Sometimes the http.Get fails with EADDRNOTAVAIL.
@@ -34,6 +36,7 @@ func GetRoutes() map[string]func(*context.Ctx, *json.RawMessage) *context.Respon
 	r := make(map[string]func(*context.Ctx, *json.RawMessage) *context.Response)
 
 	r["get_machines"] = GetMachineUuids
+	r["get_netinfo"] = GetNetinfo
 	r["get_planners"] = GetPlanners
 	r["get_sysinfo"] = GetSysinfo
 
@@ -58,10 +61,10 @@ func forward(c *context.Ctx, url string) *context.Response {
 				x := json.RawMessage(data)
 				result = &x
 			}
-		case 404:
+		default:
 			defer resp.Body.Close()
 			if data, err := ioutil.ReadAll(resp.Body); err == nil {
-				errStr = string(data)
+				errStr = "Storage Response: [HTTP " + string(resp.StatusCode) + "] " + string(data)
 				result = nil
 			}
 		}
@@ -82,16 +85,6 @@ func GetMachineUuids(c *context.Ctx, parametersRaw *json.RawMessage) *context.Re
 }
 
 type GetMachineUuidsParams struct {
-}
-
-func GetPlanners(c *context.Ctx, parametersRaw *json.RawMessage) *context.Response {
-	params := &GetPlannersParams{}
-	json.Unmarshal(*parametersRaw, params)
-	return forward(c, "/status/get_planners/"+params.MachineUuid)
-}
-
-type GetPlannersParams struct {
-	MachineUuid string
 }
 
 // Get system status information
@@ -130,9 +123,77 @@ type GetPlannersParams struct {
 func GetSysinfo(c *context.Ctx, parametersRaw *json.RawMessage) *context.Response {
 	params := &GetSysinfoParams{}
 	json.Unmarshal(*parametersRaw, params)
-	return forward(c, "/status/get_sysinfo/"+params.MachineUuid)
+	limit := strconv.FormatInt(int64(params.Limit), 10)
+	url := "/status/get_sysinfo/" + params.MachineUuid + "/" + limit
+	return forward(c, url)
 }
 
 type GetSysinfoParams struct {
+	MachineUuid string
+	Limit       int
+}
+
+// Get network status information
+// ------------------------------
+//
+// Result:
+// ```````
+//
+// type NetworkStatus struct {
+//   Interfaces []*NetworkInterface
+// }
+//
+// type NetworkInterface struct {
+//   ID        int
+//   Name      string
+//   IP        net.IP
+//   Netmask   net.IPMask
+//   Broadcast net.IP
+//   Scope     string
+// }
+//
+func GetNetinfo(c *context.Ctx, parametersRaw *json.RawMessage) *context.Response {
+	params := &GetNetinfoParams{}
+	json.Unmarshal(*parametersRaw, params)
+	return forward(c, "/status/get_netinfo/"+params.MachineUuid)
+}
+
+type GetNetinfoParams struct {
+	MachineUuid string
+}
+
+// Get planners information
+// ------------------------
+//
+// Result:
+// ```````
+//
+// map[uint64]*PlannerInformation
+//
+// type PlannerInformation struct {
+//   Name          string
+//   PID           uint64
+//   IP            net.IP
+//   Port          int
+//   Configuration string
+//   Logs          *LogBuffer
+//   Services      map[uint16]*ServiceInformation
+// }
+//
+// type ServiceInformation struct {
+//   Configuration string
+//   Name          string
+//   Port          uint16
+//   Task          string
+//   Logs          *LogBuffer
+// }
+//
+func GetPlanners(c *context.Ctx, parametersRaw *json.RawMessage) *context.Response {
+	params := &GetPlannersParams{}
+	json.Unmarshal(*parametersRaw, params)
+	return forward(c, "/status/get_planners/"+params.MachineUuid)
+}
+
+type GetPlannersParams struct {
 	MachineUuid string
 }
